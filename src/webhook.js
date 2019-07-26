@@ -5,7 +5,6 @@ const envalid = require("envalid");
 const express = require("express");
 const bodyParser = require("body-parser");
 const app = express();
-const ngrok = require("ngrok");
 const fetch = require("node-fetch");
 
 const env = envalid.cleanEnv(process.env, {
@@ -111,8 +110,4 @@ app.listen(env.PORT, () => {
   console.log(
     `Server listening on http://localhost:${env.PORT}${WEBHOOK_ROUTE_NAME}`
   );
-});
-
-ngrok.connect(env.PORT).then(url => {
-  console.log(`Server listening on ${url}${WEBHOOK_ROUTE_NAME}`);
 });

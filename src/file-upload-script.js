@@ -52,9 +52,11 @@ const uploadFile = async filePath => {
   const fileStream = fs.createReadStream(filePath);
 
   body.append("0", fileStream, {
-    filename: "bar.jpg",
+    filename: "my-file.mp3",
     contentType: "audio/mp3"
   });
+
+  console.log("[info] start transferring file");
 
   const result = await fetch(env.API_URL, {
     method: "POST",
@@ -123,7 +125,32 @@ const enqueueAnalysis = async inDepthAnalysisId => {
 };
 
 const main = async () => {
-  const filePath = path.resolve(__dirname, "pioano-sample.mp3");
+  console.log(
+    await fetch(env.API_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        query: /* GraphQL */ `
+          query inDepthAnalysis {
+            inDepthAnalyses(first: 10) {
+              edges {
+                cursor
+                node {
+                  id
+                  title
+                }
+              }
+            }
+          }
+        `
+      }),
+      headers: {
+        Authorization: "Bearer " + env.ACCESS_TOKEN,
+        "Content-Type": "application/json"
+      }
+    }).then(res => res.json())
+  );
+
+  const filePath = path.resolve(__dirname, "piano-sample.mp3");
   const uploadFileResult = await uploadFile(filePath);
   const inDepthAnalysisId =
     uploadFileResult.inDepthAnalysisFileUpload.inDepthAnalysis.id;
