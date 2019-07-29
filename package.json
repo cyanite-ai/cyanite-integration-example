@@ -18,6 +18,7 @@
   "scripts": {
     "start": "node src/webhook.js",
     "proxy-port": "node src/proxy-port.js",
-    "upload-file": "node src/file-upload-script.js"
+    "file-upload": "node src/file-upload.js",
+    "file-enqueue-analysis": "node src/file-enqueue-analysis.js"
   }
 }

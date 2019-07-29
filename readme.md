@@ -17,26 +17,39 @@ Then you can install the dependencies using either `yarn install` (or `npm insta
 
 ## Starting the webhook listener
 
-run `yarn start` (or `npm start`)
+The script uses [`ngrok.io`](https://ngrok.io) for exposing the port to the internet. This allows to make the webhook accessible from the Cyanite.ai servers for development purposes. In production environment you should not rely on ngrok.io but rather have a public facing server/service.
+
+run `yarn proxy-port` (`npm run proxy-port`)
 
 Wait until you see the following output (in case your port is already in use you will have to configure the port inside your `.env` file.)
 
-The script uses [`ngrok.io`](https://ngrok.io) for exposing the port to the internet. This allows to make the webhook accessible from the Cyanite.ai servers for development purposes. In production environment you should not rely on ngrok.io but rather have a public facing server/service.
-
 ```
 yarn run v1.15.2
-$ node src/webhook.js
-Server listening on http://localhost:8080/incoming-webhook
+$ node src/proy-port.js
 Server listening on https://f288XXXX.ngrok.io/incoming-webhook
 ```
 
 Copy the ngrok.io url and update your Cyanite.ai Integration Webhook Url to the given value. (You can use the test button to ensure that the requests arrive).
 
-## Enqueueing a new file analysis
+run `yarn start` (or `npm start`)
 
-Run the `src/file-upload-script.js` using `yarn upload-file` (or `npm run upload-file`).
-The script will upload a file and enqueue an analysis. After a few seconds you should be able to see some output in the terminal of the webhook server.
+## Upload a new file
+
+Run the `src/file-upload.js` script using `yarn file-upload` (or `npm run file-upload`).
+
+```bash
+yarn file-upload "/Users/n1ru4l/Documents/sample.mp3"
+```
+
+## Enqueueing a file analysis
+
+Run the `src/file-enqueue-analysis.js` script using `yarn file-enqueue-analysis` (or `npm run file-enqueue-analysis`).
+The script will enqueue a file analysis. After a few seconds you should be able to see some output in the terminal of the webhook server.
+
+```bash
+yarn file-enqueue-analysis "94"
+```
 
 ## Further References
 
-- [Cyanite.ai Public GraphQL API](https://app.cyanite.ai/api-docs)
+- [Cyanite.ai Public GraphQL API](https://api-docs.cyanite.ai/)
