@@ -3,75 +3,100 @@
 const envalid = require("envalid");
 const fs = require("fs");
 const fetch = require("node-fetch");
-const FormData = require("form-data");
 
 const { API_URL, ACCESS_TOKEN } = envalid.cleanEnv(process.env, {
   API_URL: envalid.str(),
   ACCESS_TOKEN: envalid.str()
 });
 
-const uploadFile = async filePath => {
-  const mutationDocument = /* GraphQL */ `
-    mutation inDepthAnalysisFileUpload(
-      $input: InDepthAnalysisFileUploadInput!
-    ) {
-      inDepthAnalysisFileUpload(data: $input) {
-        __typename
-        ... on InDepthAnalysisFileUploadSuccessResult {
-          inDepthAnalysis {
-            id
-            title
-            status
-          }
+const fileUploadRequestMutation = /* GraphQL */ `
+  mutation fileUploadRequest {
+    fileUploadRequest {
+      id
+      uploadUrl
+    }
+  }
+`;
+
+const inDepthAnalysisCreateMutation = /* GraphQL */ `
+  mutation inDepthAnalysisCreate($data: InDepthAnalysisCreateInput!) {
+    inDepthAnalysisCreate(data: $data) {
+      __typename
+      ... on InDepthAnalysisCreateResultSuccess {
+        inDepthAnalysis {
+          id
+          status
         }
-        ... on Error {
-          message
-        }
+      }
+      ... on Error {
+        message
       }
     }
-  `;
+  }
+`;
 
-  const body = new FormData();
-  body.append(
-    "operations",
-    JSON.stringify({
-      query: mutationDocument,
-      variables: {
-        input: {
-          file: "0"
-        }
-      }
-    })
-  );
-  body.append("map", JSON.stringify({ "0": ["variables.input.file"] }));
-  const fileStream = fs.createReadStream(filePath);
-
-  body.append("0", fileStream, {
-    filename: "my-uploaded-file.mp3",
-    contentType: "audio/mp3"
-  });
-
-  console.log("[info] start transferring file");
-
+const requestFileUpload = async () => {
   const result = await fetch(API_URL, {
     method: "POST",
-    body,
+    body: JSON.stringify({
+      query: fileUploadRequestMutation
+    }),
     headers: {
-      Authorization: "Bearer " + ACCESS_TOKEN
+      Authorization: "Bearer " + ACCESS_TOKEN,
+      "Content-Type": "application/json"
     }
   }).then(res => res.json());
-  console.log("[info] inDepthAnalysisFileUpload response: ");
+
+  console.log("[info] fileUploadRequest response: ");
   console.log(JSON.stringify(result, undefined, 2));
 
-  if (result.data.inDepthAnalysisFileUpload.__typename.endsWith("Error")) {
-    throw new Error(result.data.inDepthAnalysisFileUpload.message);
-  }
+  return result.data.fileUploadRequest;
+};
 
-  return result.data;
+const uploadFile = async (filePath, uploadUrl) => {
+  const result = await fetch(uploadUrl, {
+    method: "PUT",
+    body: fs.createReadStream(filePath),
+    headers: {
+      "Content-Length": fs.statSync(filePath).size
+    }
+  }).then(res => res.text());
+  console.log(result);
+};
+
+const createInDepthAnalysis = async fileUploadRequestId => {
+  const result = await fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({
+      query: inDepthAnalysisCreateMutation,
+      variables: {
+        data: {
+          fileName: "My first InDepthAnalysis",
+          uploadId: fileUploadRequestId
+        }
+      }
+    }),
+    headers: {
+      Authorization: "Bearer " + ACCESS_TOKEN,
+      "Content-Type": "application/json"
+    }
+  }).then(res => res.json());
+
+  console.log("[info] inDepthAnalysisCreate response: ");
+  console.log(JSON.stringify(result, undefined, 2));
+
+  return result.data.inDepthAnalysisCreate;
 };
 
 const main = async filePath => {
-  await uploadFile(filePath);
+  console.log("[info] request file upload");
+  const { id, uploadUrl } = await requestFileUpload(filePath);
+  console.log(uploadUrl);
+
+  console.log("[info] upload file");
+  await uploadFile(filePath, uploadUrl);
+  console.log("[info] create InDepthAnalysis");
+  await createInDepthAnalysis(id);
 };
 
 main(process.argv[2]).catch(err => {
