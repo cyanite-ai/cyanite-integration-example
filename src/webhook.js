@@ -28,23 +28,40 @@ const asynchronouslyFetchInDepthAnalysisResult = async inDepthAnalysisId => {
   const inDepthAnalysisQueryDocument = /* GraphQL */ `
     query inDepthAnalysis($inDepthAnalysisId: ID!) {
       inDepthAnalysis(recordId: $inDepthAnalysisId) {
-        id
-        status
-        result {
-          fileInfo {
-            duration
+        __typename
+        ... on InDepthAnalysis {
+          id
+          status
+          result {
+            fileInfo {
+              duration
+            }
+            labels {
+              title
+              type
+              start
+              end
+              amount
+            }
+            genres {
+              title
+              confidence
+            }
+            similarLibraryTracks {
+              ... on SimilarLibraryTrackConnection {
+                edges {
+                  node {
+                    distance
+                    sort
+                    inDepthAnalysisId
+                  }
+                }
+              }
+            }
           }
-          labels {
-            title
-            type
-            start
-            end
-            amount
-          }
-          genres {
-            title
-            confidence
-          }
+        }
+        ... on Error {
+          message
         }
       }
     }
