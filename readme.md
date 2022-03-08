@@ -25,11 +25,13 @@ Wait until you see the following output (in case your port is already in use you
 
 ```
 yarn run v1.15.2
-$ node src/proy-port.js
+$ node src/proxy-port.js
 Server listening on https://f288XXXX.ngrok.io/incoming-webhook
 ```
 
 Copy the ngrok.io url and update your Cyanite.ai Integration Webhook Url to the given value. (You can use the test button to ensure that the requests arrive).
+
+Please keep the proxy-port running.
 
 run `yarn start` (or `npm start`)
 
@@ -38,7 +40,7 @@ run `yarn start` (or `npm start`)
 Run the `src/file-upload.js` script using `yarn file-upload` (or `npm run file-upload`).
 
 ```bash
-yarn file-upload "/Users/n1ru4l/Documents/sample.mp3"
+yarn file-upload "./piano-sample.mp3"
 ```
 
 ## Enqueueing a file analysis
@@ -47,7 +49,7 @@ Run the `src/file-enqueue-analysis.js` script using `yarn file-enqueue-analysis`
 The script will enqueue a file analysis. After a few seconds you should be able to see some output in the terminal of the webhook server.
 
 ```bash
-yarn file-enqueue-analysis "94"
+yarn file-enqueue-analysis "<put-analysis-id-here>"
 ```
 
 ## Further References
