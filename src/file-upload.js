@@ -18,18 +18,17 @@ const fileUploadRequestMutation = /* GraphQL */ `
   }
 `;
 
-const inDepthAnalysisCreateMutation = /* GraphQL */ `
-  mutation inDepthAnalysisCreate($data: InDepthAnalysisCreateInput!) {
-    inDepthAnalysisCreate(data: $data) {
-      __typename
-      ... on InDepthAnalysisCreateResultSuccess {
-        inDepthAnalysis {
-          id
-          status
-        }
-      }
-      ... on Error {
+const libraryTrackCreateMutation = /* GraphQL */ `
+  mutation LibraryTrackCreate($input: LibraryTrackCreateInput!) {
+    libraryTrackCreate(input: $input) {
+      ... on LibraryTrackCreateError {
         message
+      }
+      ... on LibraryTrackCreateSuccess {
+        createdLibraryTrack {
+          __typename
+          id
+        }
       }
     }
   }
@@ -60,18 +59,18 @@ const uploadFile = async (filePath, uploadUrl) => {
     headers: {
       "Content-Length": fs.statSync(filePath).size
     }
-  }).then(res => res.text());
+  }).then(res => res);
   console.log(result);
 };
 
-const createInDepthAnalysis = async fileUploadRequestId => {
+const libraryTrackCreate = async fileUploadRequestId => {
   const result = await fetch(API_URL, {
     method: "POST",
     body: JSON.stringify({
-      query: inDepthAnalysisCreateMutation,
+      query: libraryTrackCreateMutation,
       variables: {
-        data: {
-          fileName: "My first InDepthAnalysis",
+        input: {
+          title: "My first libraryTrackCreate 3",
           uploadId: fileUploadRequestId
         }
       }
@@ -82,10 +81,10 @@ const createInDepthAnalysis = async fileUploadRequestId => {
     }
   }).then(res => res.json());
 
-  console.log("[info] inDepthAnalysisCreate response: ");
+  console.log("[info] libraryTrackCreate response: ");
   console.log(JSON.stringify(result, undefined, 2));
 
-  return result.data.inDepthAnalysisCreate;
+  return result.data.libraryTrackCreate;
 };
 
 const main = async filePath => {
@@ -96,7 +95,7 @@ const main = async filePath => {
   console.log("[info] upload file");
   await uploadFile(filePath, uploadUrl);
   console.log("[info] create InDepthAnalysis");
-  await createInDepthAnalysis(id);
+  await libraryTrackCreate(id);
 };
 
 main(process.argv[2]).catch(err => {

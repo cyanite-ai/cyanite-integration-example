@@ -23,68 +23,64 @@ const isSignatureValid = (secret, signature, message) => {
 
 const WEBHOOK_ROUTE_NAME = "/incoming-webhook";
 
-const asynchronouslyFetchInDepthAnalysisResult = async inDepthAnalysisId => {
+const asynchronouslyFetchlibraryTrackResult = async libraryTrackId => {
   // fetch the whole information
-  const inDepthAnalysisQueryDocument = /* GraphQL */ `
-    query inDepthAnalysis($inDepthAnalysisId: ID!) {
-      inDepthAnalysis(recordId: $inDepthAnalysisId) {
-        __typename
-        ... on InDepthAnalysis {
+  const libraryTrackQueryDocument = /* GraphQL */ `
+    query LibraryTrack($libraryTrackId: ID!) {
+      libraryTrack(id: $libraryTrackId) {
+        ... on LibraryTrackNotFoundError {
+          message
+        }
+        ... on LibraryTrack {
           id
-          status
-          result {
-            fileInfo {
-              duration
+          audioAnalysisV6 {
+            ... on AudioAnalysisV6Finished {
+              result {
+                genre {
+                  ambient
+                  blues
+                }
+              }
             }
-            labels {
-              title
-              type
-              start
-              end
-              amount
+          }
+          similarLibraryTracks {
+            ... on SimilarLibraryTracksError {
+              message
             }
-            genres {
-              title
-              confidence
-            }
-            similarLibraryTracks {
-              ... on SimilarLibraryTrackConnection {
-                edges {
-                  node {
-                    distance
-                    sort
-                    inDepthAnalysisId
+            ... on SimilarLibraryTrackConnection {
+              edges {
+                node {
+                  libraryTrack {
+                    id
                   }
                 }
               }
             }
           }
         }
-        ... on Error {
-          message
-        }
       }
-    }
+    }  
   `;
 
   const result = await fetch(env.API_URL, {
     method: "POST",
     body: JSON.stringify({
-      query: inDepthAnalysisQueryDocument,
-      variables: { inDepthAnalysisId }
+      query: libraryTrackQueryDocument,
+      variables: { libraryTrackId }
     }),
     headers: {
       Authorization: "Bearer " + env.ACCESS_TOKEN,
       "Content-Type": "application/json"
     }
   }).then(res => res.json());
-  console.log("[info] inDepthAnalysis result");
+  console.log("[info] libraryTrack result");
   console.log(JSON.stringify(result, undefined, 2));
 };
 
 app.use(bodyParser.json());
 app.post(WEBHOOK_ROUTE_NAME, (req, res) => {
   if (!req.body) {
+    console.log('[info] unprocessable entity')
     return res.sendStatus(422); // Unprocessable Entity
   }
 
@@ -110,12 +106,12 @@ app.post(WEBHOOK_ROUTE_NAME, (req, res) => {
   }
   console.log("[info] signature is valid");
 
-  if (req.body.type === "IN_DEPTH_ANALYSIS_FINISHED") {
+  if (req.body.event.type === "AudioAnalysisV6" && req.body.event.status === "finished") {
     console.log("[info] processing finish event");
 
     // You can use the result here, but keep in mind that you should probably process the result asynchronously
     // The request of the incoming webhook will be canceled after 3 seconds.
-    asynchronouslyFetchInDepthAnalysisResult(req.body.data.inDepthAnalysisId);
+    asynchronouslyFetchlibraryTrackResult(req.body.resource.id);
   }
 
   // Do something with the result here
